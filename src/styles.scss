@@ -1,0 +1,82 @@
+@use "sass:math";
+@import "./variables.scss";
+@import "./mixins.scss";
+
+$perspective-rot-x: 65deg;
+$perspective-rot-z: 45deg;
+
+$base-x: 2em;
+$base-y: 2em;
+$base-z: 6em;
+
+input {
+  position: relative;
+}
+
+.perspective {
+  font-size: 70%;
+  @include base-style(94em, 84em, hsla(0, 0%, 0%, 0.1));
+  left: 50%;
+  top: 50%;
+  background-image: $grid;
+  background-size: $base-x $base-y;
+  box-shadow: 0 0 0 0.1em hsla(0, 0%, 0%, 0.2);
+}
+
+.tf {
+  $block-shift-x: 0em * 2;
+  $block-shift-y: 0em * 2;
+  /* Top */
+  .cube {
+    $side-len: 2em;
+    $offset: 2em;
+    &,
+    &::before,
+    &::after {
+      @include base-style($side-len, $side-len, #f66);
+    }
+    transform: translate3d($base-x + $block-shift-x - $offset, $base-y + $block-shift-y - $offset, $base-z);
+
+    /* Left */
+    &:after {
+      transform: rotateX(-90deg) translateY($side-len);
+      transform-origin: 100% 100%;
+    }
+    /* Right */
+    &:before {
+      transform: rotateY(90deg) translateX($side-len);
+      transform-origin: 100% 0;
+    }
+
+    &:nth-of-type(2) {
+      transform: translate3d($base-x + $block-shift-x - $offset, $base-y + $block-shift-y - $offset, $base-z + 2em);
+    }
+    &:nth-of-type(3) {
+      transform: translate3d($base-x + $block-shift-x - $offset, $base-y + $block-shift-y - $offset, $base-z + 4em);
+    }
+  }
+
+  /* Top */
+  .tf-holder {
+    $offset: 1.35em;
+    &,
+    &::before,
+    &::after {
+      @include base-style(0.5em, 0.5em, rgb(63, 63, 63));
+    }
+    transform: translate3d($base-x + $block-shift-x - $offset, $base-y + $block-shift-y - $offset, $base-z);
+
+    /* Left */
+    &:after {
+      height: 6em;
+      transform-origin: 100% 100%;
+      transform: rotateX(-90deg) translateY($base-z) translateZ(-5.5em);
+    }
+    /* Right */
+    &:before {
+      width: 6em;
+      transform-origin: 100% 0;
+      transform: rotateY(90deg) translateX($base-z) translateZ(-5.5em);
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import socket from "socket.io-client";
-let s = socket.io();
+let s = socket.io({
+  path: "/socket/traffic-light-system",
+});
 
 const eStatus = document.querySelector(".status");
 const eUsers = document.querySelector(".online-users");
@@ -266,7 +268,17 @@ const draw = () => {
   // Draw traffic light on the train intersections (X1)
   xOffset = 1.11;
   yOffset = 0.3;
-  drawTrafficLight(x * xOffset, y - x * yOffset, width, height, UP, null, colors[TL_X1_EW?.state], null, false);
+  drawTrafficLight(
+    x * xOffset,
+    y - x * yOffset,
+    width,
+    height,
+    UP,
+    null,
+    colors[TL_X1_EW?.state],
+    null,
+    false
+  );
   drawTrafficLight(
     x * (xOffset - 0.22),
     y - x * (yOffset - 0.6),

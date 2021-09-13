@@ -9,14 +9,15 @@ const webServer = http.createServer(webApp);
 const qnxServer = http.createServer(qnxApp);
 
 const io = new Server(webServer, {
+  path: "/socket/traffic-light-system",
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
 });
 
-let host = "localhost";
-const ports = [3000, 3005];
+let host = "0.0.0.0";
+const ports = [3030, 3035];
 
 const nets = networkInterfaces();
 const results = Object.create(null); // Or just '{}', an empty object
@@ -33,11 +34,11 @@ for (const name of Object.keys(nets)) {
   }
 }
 
-if (arch() == "x32" || arch() == "x64") host = results["Ethernet"][0];
+// if (arch() == "x32" || arch() == "x64") host = results["Ethernet"][0];
 
-// QNX node -- /update --> (3005) SERVER (3000) <------------------ new client is connected
+// QNX node -- /update --> (3035) SERVER (3030) <------------------ new client is connected
 //                                   |
-//                                (3000)
+//                                (3030)
 //                                SOCKET -- new state -----> connected client
 //                                                      |--> connected client
 //                                                      |--> connected client
@@ -45,13 +46,17 @@ if (arch() == "x32" || arch() == "x64") host = results["Ethernet"][0];
 
 // Initial state
 let systemState = {};
-
 let systemIsConnected = false;
 
 // ==================== Web : Routes ========================= //
 
-webApp.use(express.static("build/public"));
+// serve static files
+webApp.use("/traffic-light-system", express.static(__dirname + "/build/public/traffic-light-system"));
 
+// serve the webpage
+webApp.get("/traffic-light-system", (req, res) => {
+  res.sendFile(__dirname + "/build/public/index.html");
+});
 // ==================== QNX : Routes ========================= //
 
 qnxApp.use(express.json());
@@ -66,7 +71,7 @@ qnxApp.get("/qnx/:deviceId/:newState", (req, res) => {
 qnxApp.post("/qnx/update", (req, res) => {
   const receivedState = req.body;
 
-  console.log(receivedState);
+  // console.log(receivedState);
 
   if (!(receivedState instanceof Object)) {
     res.send("ERROR: Invalid data");
@@ -90,7 +95,7 @@ const refresh = () => {
 };
 
 io.on("connection", (socket) => {
-  console.log("a new user has connected connected");
+  // console.log("a new user has connected connected");
 
   // Add any user to the main_room
   socket.join("main_room");
@@ -101,11 +106,11 @@ io.on("connection", (socket) => {
 
   // for testign
   socket.on("client_msg", (msg) => {
-    console.log(msg);
+    // console.log(msg);
   });
 
   socket.on("disconnect", () => {
-    console.log("user has disconnected");
+    // console.log("user has disconnected");
     // Update the number of online user
     refresh();
   });
@@ -124,7 +129,7 @@ const getConnections = () => {
 };
 
 qnxServer.on("connection", (socket) => {
-  console.log(socket.remoteAddress, socket.remotePort);
+  // console.log(socket.remoteAddress, socket.remotePort);
   systemIsConnected = true;
   refresh();
   socket.on("close", () => {

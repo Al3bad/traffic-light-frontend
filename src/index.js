@@ -84,10 +84,13 @@ s.on("refresh", ({ systemIsConnected, users, systemState }) => {
   draw();
 });
 
-// const btn = document.querySelector("button");
-// btn.addEventListener("click", (e) => {
-//   s.emit("client_msg", "This is a message from the client");
-// });
+const btn = document.querySelector("button");
+btn.addEventListener("click", (e) => {
+  s.emit("send_command", {
+    command: "TEST",
+    value: "This is just a test command",
+  });
+});
 
 // ==================== Canvas ========================= //
 

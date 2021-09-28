@@ -1,12 +1,14 @@
-const { networkInterfaces, arch } = require("os");
 const { Server } = require("socket.io");
 const http = require("http");
+const net = require("net");
 const express = require("express");
 
 const webApp = express();
-const qnxApp = express();
 const webServer = http.createServer(webApp);
-const qnxServer = http.createServer(qnxApp);
+const qnxServer = net.createServer();
+
+let host = "localhost";
+const ports = [3030, 3035];
 
 const io = new Server(webServer, {
   path: "/socket/traffic-light-system",
@@ -16,37 +18,18 @@ const io = new Server(webServer, {
   },
 });
 
-let host = "0.0.0.0";
-const ports = [3030, 3035];
-
-const nets = networkInterfaces();
-const results = Object.create(null); // Or just '{}', an empty object
-
-for (const name of Object.keys(nets)) {
-  for (const net of nets[name]) {
-    // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-    if (net.family === "IPv4" && !net.internal) {
-      if (!results[name]) {
-        results[name] = [];
-      }
-      results[name].push(net.address);
-    }
-  }
-}
-
-// if (arch() == "x32" || arch() == "x64") host = results["Ethernet"][0];
-
-// QNX node -- /update --> (3035) SERVER (3030) <------------------ new client is connected
+// QNX node ---[update]--> (3035) SERVER
 //                                   |
-//                                (3030)
-//                                SOCKET -- new state -----> connected client
-//                                                      |--> connected client
-//                                                      |--> connected client
-//                                                      |--> ...
+//                                (3030) <--------------- new client is connected
+//                                SOCKET -- new state --> connected client
+//                                                   |--> connected client
+//                                                   |--> connected client
+//                                                   |--> ...
 
 // Initial state
 let systemState = {};
 let systemIsConnected = false;
+let qnxSocket = undefined;
 
 // ==================== Web : Routes ========================= //
 
@@ -56,32 +39,6 @@ webApp.use("/traffic-light-system", express.static(__dirname + "/build/public/tr
 // serve the webpage
 webApp.get("/traffic-light-system", (req, res) => {
   res.sendFile(__dirname + "/build/public/index.html");
-});
-// ==================== QNX : Routes ========================= //
-
-qnxApp.use(express.json());
-
-// This route is used by QNX nodes to sends the states of the system
-// Then update all the clients in the main_room
-qnxApp.get("/qnx/:deviceId/:newState", (req, res) => {
-  io.to("main_room").emit("update", { device_id: req.params.deviceId, new_state: req.params.newState });
-  res.send("ok");
-});
-
-qnxApp.post("/qnx/update", (req, res) => {
-  const receivedState = req.body;
-
-  // console.log(receivedState);
-
-  if (!(receivedState instanceof Object)) {
-    res.send("ERROR: Invalid data");
-    return;
-  }
-
-  systemState = receivedState;
-
-  refresh();
-  res.send("ok");
 });
 
 // ==================== Socket IO ========================= //
@@ -105,8 +62,12 @@ io.on("connection", (socket) => {
   refresh();
 
   // for testign
-  socket.on("client_msg", (msg) => {
-    // console.log(msg);
+  socket.on("send_command", (msg) => {
+    if (systemIsConnected && qnxSocket) {
+      // send the command to the qnx node (browser ---> web-server ---> qnx-node)
+      // console.log(`COMMAND: ${msg.command}, VALUE: ${msg.value}`);
+      qnxSocket.write(`${msg.command}=${msg.value}\n`);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -115,6 +76,40 @@ io.on("connection", (socket) => {
     refresh();
   });
 });
+
+// ==================== QNX : Server ========================= //
+
+qnxServer.on("connection", (socket) => {
+  qnxSocket = socket;
+  systemIsConnected = true;
+  refresh();
+
+  socket.on("data", (data) => {
+    const body = data.toString().split(">")[1];
+    console.log(body);
+    // TODO: Process the body and send it to the front-end
+    // ...
+    // ...
+
+
+  });
+
+  socket.on("end", () => {
+    console.log("socket end")
+  });
+
+  socket.on("close", () => {
+    console.log("socket close");
+    qnxSocket = undefined;
+    systemIsConnected = false;
+    systemState = {};
+    refresh();
+  })
+
+  socket.on("error", () => {
+    console.log("socket error");
+  })
+})
 
 // ========================================================= //
 
@@ -128,20 +123,8 @@ const getConnections = () => {
   });
 };
 
-qnxServer.on("connection", (socket) => {
-  // console.log(socket.remoteAddress, socket.remotePort);
-  systemIsConnected = true;
-  refresh();
-  socket.on("close", () => {
-    systemIsConnected = false;
-    systemState = {};
-    refresh();
-  });
-});
-
-qnxServer.keepAliveTimeout = 0;
 qnxServer.maxConnections = 1;
-qnxServer.listen(ports[1], host, () => {
+qnxServer.listen(ports[1], () => {
   console.log(`QNX server is listening at http://${host}:${ports[1]}`);
 });
 

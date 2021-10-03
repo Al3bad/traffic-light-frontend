@@ -20,8 +20,17 @@ body {
   nav {
     background-color: lightblue;
     flex-shrink: 0;
-    width: 200px;
+    width: 250px;
     padding: 5px;
+
+    hr {
+      margin: 10px 0;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    ol {
+      padding-left: 25px;
+    }
   }
 
   div {

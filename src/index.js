@@ -5,10 +5,26 @@ let s = socket.io({
 
 const eStatus = document.querySelector(".status");
 const eUsers = document.querySelector(".online-users");
+const eTime = document.querySelector(".time");
+
 eStatus.innerHTML = "System is not connected";
+eStatus.style.color = "red";
+
 eUsers.innerHTML = "Online Users: 0";
 
-const colors = ["grey", "red", "yellow", "green"];
+function calcTime(city, offset) {
+    let d = new Date();
+    let utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    let nd = new Date(utc + (3600000*offset));
+    return nd.toLocaleString("en-AU");
+}
+
+setInterval(() => {
+  eTime.innerHTML = calcTime("Melbourne", "+11");
+}, 1000);
+
+
+const colors = ["grey", "red", "yellow", "green", "flashing"];
 let data = {
   TL_I1_NS: {
     state: 0,
@@ -79,16 +95,17 @@ s.on("update", (newState) => {
 s.on("refresh", ({ systemIsConnected, users, systemState }) => {
   console.log(systemIsConnected, users, systemState);
   eStatus.innerHTML = `System is ${systemIsConnected ? "" : "not"} connected`;
+  eStatus.style.color = systemIsConnected ? "green" : "red";
   eUsers.innerHTML = `Online Users: ${users}`;
   data = systemState;
   draw();
 });
 
-const btn = document.querySelector("button");
+const btn = document.querySelector(".send-train-signal-btn");
 btn.addEventListener("click", (e) => {
   s.emit("send_command", {
-    command: "TEST",
-    value: "This is just a test command",
+    command: "CMD_INCOMING_TRAIN",
+    value: "1",
   });
 });
 
@@ -97,9 +114,30 @@ btn.addEventListener("click", (e) => {
 const canvasContainer = document.querySelector(".layout div");
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
+let sensors = [];
 
 let width = canvasContainer.clientWidth;
 let height = canvasContainer.clientHeight;
+
+// Add click event for the sensors
+canvas.addEventListener(
+  "click",
+  (event) => {
+    const x = event.pageX - canvas.offsetLeft;
+    const y = event.pageY - canvas.offsetTop;
+    sensors.forEach((element) => {
+      if (
+        y + element.height / 2 > element.top &&
+        y + element.height / 2 < element.top + element.height &&
+        x + element.width / 2 > element.left &&
+        x + element.width / 2 < element.left + element.width
+      ) {
+        alert("Sensor ID: " + element.id);
+      }
+    });
+  },
+  false
+);
 
 window.addEventListener("DOMContentLoaded", () => {});
 
@@ -142,6 +180,11 @@ const draw = () => {
   // Draw the background
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, width, height);
+
+  // Sensors settings
+  sensors = [];
+  let sensorWidth = width / 60;
+  let sensorHeight = sensorWidth;
 
   let x = width * 0.5;
   let y = height * 0.5;
@@ -193,6 +236,17 @@ const draw = () => {
   );
   drawTrafficLight(
     x * xOffset,
+    y - x * (yOffset - 0.093),
+    width,
+    height,
+    LEFT,
+    null,
+    colors[TL_I1_NS?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
+    x * xOffset,
     y + x * yOffset,
     width,
     height,
@@ -201,6 +255,28 @@ const draw = () => {
     colors[TL_I1_SN?.state],
     colors[TL_I1_SN?.pl_state]
   );
+  drawTrafficLight(
+    x * xOffset,
+    y + x * (yOffset - 0.093),
+    width,
+    height,
+    RIGHT,
+    null,
+    colors[TL_I1_NS?.state],
+    null,
+    false
+  );
+
+  // let xCarSensorLocation = x * xOffset - 15;
+  // let yCarSensorLocation = y - x * yOffset + 30;
+  // drawRect(xCarSensorLocation, yCarSensorLocation, sensorWidth, sensorHeight, "#323232");
+  // sensors.push({
+  //   id: "sensor",
+  //   top: yCarSensorLocation,
+  //   left: xCarSensorLocation,
+  //   width: sensorWidth,
+  //   height: sensorWidth,
+  // });
 
   xOffset = 0.55;
   drawTrafficLight(
@@ -215,6 +291,17 @@ const draw = () => {
   );
   drawTrafficLight(
     x * xOffset,
+    y - x * (yOffset - 0.093),
+    width,
+    height,
+    LEFT,
+    null,
+    colors[TL_I1_NS?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
+    x * xOffset,
     y + x * yOffset,
     width,
     height,
@@ -223,6 +310,28 @@ const draw = () => {
     colors[TL_I1_SN?.state],
     colors[TL_I1_SN?.pl_state]
   );
+  drawTrafficLight(
+    x * xOffset,
+    y + x * (yOffset - 0.093),
+    width,
+    height,
+    RIGHT,
+    null,
+    colors[TL_I1_NS?.state],
+    null,
+    false
+  );
+
+  // xCarSensorLocation = x * xOffset + 15;
+  // yCarSensorLocation = y + x * yOffset - 30;
+  // drawRect(xCarSensorLocation, yCarSensorLocation, sensorWidth, sensorHeight, "#323232");
+  // sensors.push({
+  //   id: "sensor",
+  //   top: yCarSensorLocation,
+  //   left: xCarSensorLocation,
+  //   width: sensorWidth,
+  //   height: sensorWidth,
+  // });
 
   xOffset = 1.45;
   drawTrafficLight(
@@ -237,6 +346,17 @@ const draw = () => {
   );
   drawTrafficLight(
     x * xOffset,
+    y - x * (yOffset - 0.093),
+    width,
+    height,
+    LEFT,
+    null,
+    colors[TL_I2_NS?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
+    x * xOffset,
     y + x * yOffset,
     width,
     height,
@@ -245,6 +365,28 @@ const draw = () => {
     colors[TL_I2_SN?.state],
     colors[TL_I2_SN?.pl_state]
   );
+  drawTrafficLight(
+    x * xOffset,
+    y + x * (yOffset - 0.093),
+    width,
+    height,
+    RIGHT,
+    null,
+    colors[TL_I2_SN?.state],
+    null,
+    false
+  );
+
+  // xCarSensorLocation = x * xOffset - 15;
+  // yCarSensorLocation = y - x * yOffset + 30;
+  // drawRect(xCarSensorLocation, yCarSensorLocation, sensorWidth, sensorHeight, "#323232");
+  // sensors.push({
+  //   id: "sensor",
+  //   top: yCarSensorLocation,
+  //   left: xCarSensorLocation,
+  //   width: sensorWidth,
+  //   height: sensorWidth,
+  // });
 
   xOffset = 1.75;
   drawTrafficLight(
@@ -259,6 +401,17 @@ const draw = () => {
   );
   drawTrafficLight(
     x * xOffset,
+    y - x * (yOffset - 0.093),
+    width,
+    height,
+    LEFT,
+    null,
+    colors[TL_I2_NS?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
+    x * xOffset,
     y + x * yOffset,
     width,
     height,
@@ -267,21 +420,33 @@ const draw = () => {
     colors[TL_I2_SN?.state],
     colors[TL_I2_SN?.pl_state]
   );
+  drawTrafficLight(
+    x * xOffset,
+    y + x * (yOffset - 0.093),
+    width,
+    height,
+    RIGHT,
+    null,
+    colors[TL_I2_SN?.state],
+    null,
+    false
+  );
+
+  // xCarSensorLocation = x * xOffset + 15;
+  // yCarSensorLocation = y + x * yOffset - 30;
+  // drawRect(xCarSensorLocation, yCarSensorLocation, sensorWidth, sensorHeight, "#323232");
+  // sensors.push({
+  //   id: "sensor",
+  //   top: yCarSensorLocation,
+  //   left: xCarSensorLocation,
+  //   width: sensorWidth,
+  //   height: sensorWidth,
+  // });
 
   // Draw traffic light on the train intersections (X1)
   xOffset = 1.11;
   yOffset = 0.3;
-  drawTrafficLight(
-    x * xOffset,
-    y - x * yOffset,
-    width,
-    height,
-    UP,
-    null,
-    colors[TL_X1_EW?.state],
-    null,
-    false
-  );
+  drawTrafficLight(x * xOffset, y - x * yOffset, width, height, UP, null, colors[TL_X1_EW?.state], null, false);
   drawTrafficLight(
     x * (xOffset - 0.22),
     y - x * (yOffset - 0.6),
@@ -308,6 +473,17 @@ const draw = () => {
     colors[TL_I1_EW?.pl_state]
   );
   drawTrafficLight(
+    x * (xOffset - 0.093),
+    y - x * yOffset,
+    width,
+    height,
+    UP,
+    null,
+    colors[TL_I1_EW?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
     x * (xOffset - 0.22),
     y - x * yOffset,
     width,
@@ -316,6 +492,17 @@ const draw = () => {
     null,
     colors[TL_I1_WE?.state],
     colors[TL_I1_WE?.pl_state]
+  );
+  drawTrafficLight(
+    x * (xOffset - 0.22 + 0.093),
+    y - x * yOffset,
+    width,
+    height,
+    DOWN,
+    null,
+    colors[TL_I1_WE?.state],
+    null,
+    false
   );
 
   drawTrafficLight(
@@ -329,6 +516,17 @@ const draw = () => {
     colors[TL_I1_EW?.pl_state]
   );
   drawTrafficLight(
+    x * (xOffset - 0.093),
+    y + x * yOffset,
+    width,
+    height,
+    UP,
+    null,
+    colors[TL_I1_EW?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
     x * (xOffset - 0.22),
     y + x * yOffset,
     width,
@@ -337,6 +535,17 @@ const draw = () => {
     null,
     colors[TL_I1_WE?.state],
     colors[TL_I1_WE?.pl_state]
+  );
+  drawTrafficLight(
+    x * (xOffset - 0.22 + 0.093),
+    y + x * yOffset,
+    width,
+    height,
+    DOWN,
+    null,
+    colors[TL_I1_WE?.state],
+    null,
+    false
   );
 
   // Draw traffic light on the intersection 2
@@ -352,6 +561,17 @@ const draw = () => {
     colors[TL_I2_EW?.pl_state]
   );
   drawTrafficLight(
+    x * (xOffset - 0.093),
+    y - x * yOffset,
+    width,
+    height,
+    UP,
+    null,
+    colors[TL_I2_EW?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
     x * (xOffset - 0.22),
     y - x * yOffset,
     width,
@@ -360,6 +580,17 @@ const draw = () => {
     null,
     colors[TL_I2_WE?.state],
     colors[TL_I2_WE?.pl_state]
+  );
+  drawTrafficLight(
+    x * (xOffset - 0.22 + 0.093),
+    y - x * yOffset,
+    width,
+    height,
+    DOWN,
+    null,
+    colors[TL_I2_WE?.state],
+    null,
+    false
   );
 
   drawTrafficLight(
@@ -373,6 +604,17 @@ const draw = () => {
     colors[TL_I2_EW?.pl_state]
   );
   drawTrafficLight(
+    x * (xOffset - 0.093),
+    y + x * yOffset,
+    width,
+    height,
+    UP,
+    null,
+    colors[TL_I2_EW?.state],
+    null,
+    false
+  );
+  drawTrafficLight(
     x * (xOffset - 0.22),
     y + x * yOffset,
     width,
@@ -382,6 +624,37 @@ const draw = () => {
     colors[TL_I2_WE?.state],
     colors[TL_I2_WE?.pl_state]
   );
+
+  drawTrafficLight(
+    x * (xOffset - 0.22 + 0.093),
+    y + x * yOffset,
+    width,
+    height,
+    DOWN,
+    null,
+    colors[TL_I2_WE?.state],
+    null,
+    false
+  );
+
+  drawDirections(0, 0, width, height);
+};
+
+const drawDirections = (x, y, width, height) => {
+  ctx.fillStyle = "black";
+  const leftBase = 20;
+  const topBase = height - 100;
+  const rectWidth = 70;
+  const rectThickness = 3;
+  ctx.font = "20px Arial";
+  ctx.fillText("N", leftBase + 10, topBase + 41);
+  ctx.fillRect(leftBase + 30, topBase + 33, rectWidth, rectThickness);
+  ctx.font = "15px Arial";
+  ctx.fillText("S", leftBase + 20 + rectWidth + 15, topBase + 40);
+
+  ctx.fillText("E", leftBase + 33 + (rectWidth / 2 - 8), topBase - 10);
+  ctx.fillRect(leftBase + 30 + (rectWidth / 2 - 1.5), topBase, rectThickness, rectWidth);
+  ctx.fillText("W", leftBase + 33 + (rectWidth / 2 - 10), topBase + rectWidth + 20);
 };
 
 const drawRoad = (x, y, width, height, color) => {
@@ -396,10 +669,12 @@ const drawRoad = (x, y, width, height, color) => {
   ctx.restore();
 };
 
+const drawRect = drawRoad;
+
 const drawTrafficLight = (x, y, width, height, angle, flip, tColor, pColor, pCrossing = true) => {
   ctx.save();
 
-  let r = width * 0.01;
+  let r = width * 0.007;
   let invert = 1;
   if (flip) invert = -1;
 

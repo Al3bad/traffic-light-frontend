@@ -12,15 +12,19 @@
     "build": "parcel build ./src/index.html --out-dir build/public"
   },
   "customDistStructure": {
-	  "config": {
-		  "traffic-light-system": [".js", ".css", ".map"]
-	  }
+    "config": {
+      "traffic-light-system": [
+        ".js",
+        ".css",
+        ".map"
+      ]
+    }
   },
   "author": "Abdullah Alabbad",
   "license": "ISC",
   "devDependencies": {
     "parcel-bundler": "^1.12.5",
-    "parcel-plugin-custom-dist-structure": "^1.1.18",
+    "parcel-plugin-custom-dist-structure": "^1.1.19",
     "sass": "^1.39.0"
   },
   "dependencies": {

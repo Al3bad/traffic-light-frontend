@@ -27,7 +27,7 @@ const io = new Server(webServer, {
 //                                                   |--> ...
 
 // Initial state
-let systemState = {};
+let systemStatus = {};
 let systemIsConnected = false;
 let qnxSocket = undefined;
 
@@ -47,7 +47,7 @@ const refresh = () => {
     io.to("main_room").emit("refresh", {
       systemIsConnected,
       users: io.sockets.adapter.rooms.get("main_room").size,
-      systemState,
+      systemStatus,
     });
 };
 
@@ -86,12 +86,14 @@ qnxServer.on("connection", (socket) => {
 
   socket.on("data", (data) => {
     const body = data.toString().split(">")[1];
-    console.log(body);
-    // TODO: Process the body and send it to the front-end
-    // ...
-    // ...
+    
+    // Clean up the received body
+    const status = body.split("-");
+    systemStatus[status[0]] = status[1].slice(0, status[1].indexOf("\x00"));
 
-
+    // Send it to the front-end
+    // console.log(systemStatus);
+    refresh();
   });
 
   socket.on("end", () => {
@@ -102,7 +104,7 @@ qnxServer.on("connection", (socket) => {
     console.log("socket close");
     qnxSocket = undefined;
     systemIsConnected = false;
-    systemState = {};
+    systemStatus = {};
     refresh();
   })
 

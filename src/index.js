@@ -13,72 +13,22 @@ eStatus.style.color = "red";
 eUsers.innerHTML = "Online Users: 0";
 
 function calcTime(city, offset) {
-    let d = new Date();
-    let utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-    let nd = new Date(utc + (3600000*offset));
-    return nd.toLocaleString("en-AU");
+  let d = new Date();
+  let utc = d.getTime() + d.getTimezoneOffset() * 60000;
+  let nd = new Date(utc + 3600000 * offset);
+  return nd.toLocaleString("en-AU");
 }
+
 
 setInterval(() => {
   eTime.innerHTML = calcTime("Melbourne", "+11");
 }, 1000);
 
-
-const colors = ["grey", "red", "yellow", "green", "flashing"];
-let data = {
-  TL_I1_NS: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_I1_SN: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_I1_EW: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_I1_WE: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_I2_NS: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_I2_SN: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_I2_EW: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_I2_WE: {
-    state: 0,
-    pl_state: 0,
-    active: true,
-  },
-  TL_X1_EW: {
-    state: 0,
-    active: true,
-  },
-  TL_X1_WE: {
-    state: 0,
-    active: true,
-  },
-  BG_X1: {
-    state: 0,
-    active: true,
-  },
-};
+const colors = { R: "red", S: "red", Y: "yellow", G: "green", W: "red" };
+let data = {};
+let flashing = false;
+let toggleColor = "grey";
+let interval;
 
 s.on("connect", (msg) => {
   console.log("A new connection has been established");
@@ -92,14 +42,46 @@ s.on("update", (newState) => {
   console.log(newState);
 });
 
-s.on("refresh", ({ systemIsConnected, users, systemState }) => {
-  console.log(systemIsConnected, users, systemState);
+s.on("refresh", ({ systemIsConnected, users, systemStatus }) => {
+  console.log(systemIsConnected, users, systemStatus);
   eStatus.innerHTML = `System is ${systemIsConnected ? "" : "not"} connected`;
   eStatus.style.color = systemIsConnected ? "green" : "red";
   eUsers.innerHTML = `Online Users: ${users}`;
-  data = systemState;
-  draw();
+
+  // Process data
+  flashing = false;
+  for (const node in systemStatus) {
+    if (Object.hasOwnProperty.call(systemStatus, node)) {
+      const statusRaw = systemStatus[node];
+      const status = statusRaw.split(":");
+
+      const currNode = {};
+
+      status.forEach((element) => {
+        const arr = element.split("=");
+        currNode[arr[0]] = arr[1];
+        if (arr[1] == "W") flashing = true;
+      });
+
+      data[node] = currNode;
+    }
+  }
+  // data = systemStatus;
+  console.log(data);
+  if (flashing) {
+    interval = setInterval(() => {
+      toggleColor = toggleColor == "red"? "grey": "red";
+      draw();
+    }, 300)
+  } else {
+    clearInterval(interval);
+    draw();
+
+  }
 });
+
+
+
 
 const btn = document.querySelector(".send-train-signal-btn");
 btn.addEventListener("click", (e) => {
@@ -164,17 +146,9 @@ function resizeCanvas() {
 
 const draw = () => {
   let {
-    TL_I1_NS,
-    TL_I1_SN,
-    TL_I1_EW,
-    TL_I1_WE,
-    TL_I2_NS,
-    TL_I2_SN,
-    TL_I2_EW,
-    TL_I2_WE,
-    TL_X1_EW,
-    TL_X1_WE,
-    BG_X1,
+    I1,
+    I2,
+    X1,
   } = data;
   const padding = 10;
   // Draw the background
@@ -212,8 +186,8 @@ const draw = () => {
   drawRoad(x * 1.6, y, roadHeight, roadWidth * 0.11, roadColor);
 
   // Draw boom gates
-  drawRoad(x * 0.88, y, roadWidth * 0.005, roadWidth * 0.1, colors[BG_X1?.state]);
-  drawRoad(x * 1.12, y, roadWidth * 0.005, roadWidth * 0.1, colors[BG_X1?.state]);
+  drawRoad(x * 0.88, y, roadWidth * 0.005, roadWidth * 0.1, colors[X1?.state]);
+  drawRoad(x * 1.12, y, roadWidth * 0.005, roadWidth * 0.1, colors[X1?.state]);
 
   // Draw traffic light
   const UP = 180;
@@ -231,8 +205,8 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I1_NS?.state],
-    colors[TL_I1_NS?.pl_state]
+    colors[I1?.SS],
+    flashing && I1?.PN == "W" ? toggleColor : colors[I1?.PN]
   );
   drawTrafficLight(
     x * xOffset,
@@ -241,7 +215,7 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I1_NS?.state],
+    colors[I1?.SR],
     null,
     false
   );
@@ -252,8 +226,8 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I1_SN?.state],
-    colors[TL_I1_SN?.pl_state]
+    colors[I1?.NS],
+    flashing && I1?.PS == "W" ? toggleColor : colors[I1?.PS]
   );
   drawTrafficLight(
     x * xOffset,
@@ -262,7 +236,7 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I1_NS?.state],
+    colors[I1?.NR],
     null,
     false
   );
@@ -286,8 +260,8 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I1_NS?.state],
-    colors[TL_I1_NS?.pl_state]
+    colors[I1?.SS],
+    flashing && I1?.PN == "W" ? toggleColor : colors[I1?.PN]
   );
   drawTrafficLight(
     x * xOffset,
@@ -296,7 +270,7 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I1_NS?.state],
+    colors[I1?.SR],
     null,
     false
   );
@@ -307,8 +281,8 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I1_SN?.state],
-    colors[TL_I1_SN?.pl_state]
+    colors[I1?.NS],
+    flashing && I1?.PS == "W" ? toggleColor : colors[I1?.PS]
   );
   drawTrafficLight(
     x * xOffset,
@@ -317,7 +291,7 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I1_NS?.state],
+    colors[I1?.NR],
     null,
     false
   );
@@ -341,8 +315,8 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I2_NS?.state],
-    colors[TL_I2_NS?.pl_state]
+    colors[I2?.SS],
+    flashing && I2?.PN == "W" ? toggleColor : colors[I2?.PN]
   );
   drawTrafficLight(
     x * xOffset,
@@ -351,7 +325,7 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I2_NS?.state],
+    colors[I2?.SR],
     null,
     false
   );
@@ -362,8 +336,8 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I2_SN?.state],
-    colors[TL_I2_SN?.pl_state]
+    colors[I2?.NS],
+    flashing && I2?.PS == "W" ? toggleColor : colors[I2?.PS]
   );
   drawTrafficLight(
     x * xOffset,
@@ -372,7 +346,7 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I2_SN?.state],
+    colors[I2?.NR],
     null,
     false
   );
@@ -396,8 +370,8 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I2_NS?.state],
-    colors[TL_I2_NS?.pl_state]
+    colors[I2?.SS],
+    flashing && I2?.PN == "W" ? toggleColor : colors[I2?.PN]
   );
   drawTrafficLight(
     x * xOffset,
@@ -406,7 +380,7 @@ const draw = () => {
     height,
     LEFT,
     null,
-    colors[TL_I2_NS?.state],
+    colors[I2?.SR],
     null,
     false
   );
@@ -417,8 +391,8 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I2_SN?.state],
-    colors[TL_I2_SN?.pl_state]
+    colors[I2?.NS],
+    flashing && I2?.PS == "W" ? toggleColor : colors[I2?.PS]
   );
   drawTrafficLight(
     x * xOffset,
@@ -427,7 +401,7 @@ const draw = () => {
     height,
     RIGHT,
     null,
-    colors[TL_I2_SN?.state],
+    colors[I2?.NR],
     null,
     false
   );
@@ -446,7 +420,7 @@ const draw = () => {
   // Draw traffic light on the train intersections (X1)
   xOffset = 1.11;
   yOffset = 0.3;
-  drawTrafficLight(x * xOffset, y - x * yOffset, width, height, UP, null, colors[TL_X1_EW?.state], null, false);
+  drawTrafficLight(x * xOffset, y - x * yOffset, width, height, UP, null, colors[X1?.WS], null, false);
   drawTrafficLight(
     x * (xOffset - 0.22),
     y - x * (yOffset - 0.6),
@@ -454,7 +428,7 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_X1_WE?.state],
+    colors[X1?.ES],
     null,
     false
   );
@@ -469,8 +443,8 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I1_EW?.state],
-    colors[TL_I1_EW?.pl_state]
+    colors[I1?.WS],
+    flashing && I1?.PE == "W" ? toggleColor : colors[I1?.PE]
   );
   drawTrafficLight(
     x * (xOffset - 0.093),
@@ -479,7 +453,7 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I1_EW?.state],
+    colors[I1?.WR],
     null,
     false
   );
@@ -490,8 +464,8 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I1_WE?.state],
-    colors[TL_I1_WE?.pl_state]
+    colors[I1?.ES],
+    flashing && I1?.PW == "W" ? toggleColor : colors[I1?.PW]
   );
   drawTrafficLight(
     x * (xOffset - 0.22 + 0.093),
@@ -500,7 +474,7 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I1_WE?.state],
+    colors[I1?.ER],
     null,
     false
   );
@@ -512,8 +486,8 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I1_EW?.state],
-    colors[TL_I1_EW?.pl_state]
+    colors[I1?.WS],
+    flashing && I1?.PE == "W" ? toggleColor : colors[I1?.PE]
   );
   drawTrafficLight(
     x * (xOffset - 0.093),
@@ -522,7 +496,7 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I1_EW?.state],
+    colors[I1?.WR],
     null,
     false
   );
@@ -533,8 +507,8 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I1_WE?.state],
-    colors[TL_I1_WE?.pl_state]
+    colors[I1?.ES],
+    flashing && I1?.PW == "W" ? toggleColor : colors[I1?.PW]
   );
   drawTrafficLight(
     x * (xOffset - 0.22 + 0.093),
@@ -543,7 +517,7 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I1_WE?.state],
+    colors[I1?.ER],
     null,
     false
   );
@@ -557,8 +531,8 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I2_EW?.state],
-    colors[TL_I2_EW?.pl_state]
+    colors[I2?.WS],
+    flashing && I2?.PE == "W" ? toggleColor : colors[I2?.PE]
   );
   drawTrafficLight(
     x * (xOffset - 0.093),
@@ -567,7 +541,7 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I2_EW?.state],
+    colors[I2?.WR],
     null,
     false
   );
@@ -578,8 +552,8 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I2_WE?.state],
-    colors[TL_I2_WE?.pl_state]
+    colors[I2?.ES],
+    flashing && I2?.PW == "W" ? toggleColor : colors[I2?.PW]
   );
   drawTrafficLight(
     x * (xOffset - 0.22 + 0.093),
@@ -588,7 +562,7 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I2_WE?.state],
+    colors[I2?.ER],
     null,
     false
   );
@@ -600,8 +574,8 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I2_EW?.state],
-    colors[TL_I2_EW?.pl_state]
+    colors[I2?.WS],
+    flashing && I2?.PE == "W" ? toggleColor : colors[I2?.PE]
   );
   drawTrafficLight(
     x * (xOffset - 0.093),
@@ -610,7 +584,7 @@ const draw = () => {
     height,
     UP,
     null,
-    colors[TL_I2_EW?.state],
+    colors[I2?.WR],
     null,
     false
   );
@@ -621,8 +595,8 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I2_WE?.state],
-    colors[TL_I2_WE?.pl_state]
+    colors[I2?.ES],
+    flashing && I2?.PW == "W" ? toggleColor : colors[I2?.PW]
   );
 
   drawTrafficLight(
@@ -632,7 +606,7 @@ const draw = () => {
     height,
     DOWN,
     null,
-    colors[TL_I2_WE?.state],
+    colors[I2?.ER],
     null,
     false
   );

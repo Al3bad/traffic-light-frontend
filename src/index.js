@@ -19,12 +19,21 @@ function calcTime(city, offset) {
   return nd.toLocaleString("en-AU");
 }
 
-
 setInterval(() => {
   eTime.innerHTML = calcTime("Melbourne", "+11");
 }, 1000);
 
-const colors = { R: "red", S: "red", Y: "yellow", G: "green", W: "red", N: "grey" };
+const colors = {
+  R: "red",
+  S: "red",
+  Y: "yellow",
+  G: "green",
+  W: "red",
+  N: "grey",
+  F: "yellow",
+  C: "red",
+  O: "green",
+};
 let data = {};
 let flashing = false;
 let toggleColor = "grey";
@@ -70,18 +79,14 @@ s.on("refresh", ({ systemIsConnected, users, systemStatus }) => {
   console.log(data);
   if (flashing) {
     interval = setInterval(() => {
-      toggleColor = toggleColor == "red"? "grey": "red";
+      toggleColor = toggleColor == "red" ? "grey" : "red";
       draw();
-    }, 300)
+    }, 300);
   } else {
     clearInterval(interval);
     draw();
-
   }
 });
-
-
-
 
 // const btn = document.querySelector(".send-train-signal-btn");
 // btn.addEventListener("click", (e) => {
@@ -145,11 +150,7 @@ function resizeCanvas() {
 }
 
 const draw = () => {
-  let {
-    I1,
-    I2,
-    X1,
-  } = data;
+  let { I1, I2, X1 } = data;
   const padding = 10;
   // Draw the background
   ctx.fillStyle = "white";
@@ -208,17 +209,7 @@ const draw = () => {
     colors[I1?.SS],
     flashing && I1?.PN == "W" ? toggleColor : colors[I1?.PN]
   );
-  drawTrafficLight(
-    x * xOffset,
-    y - x * (yOffset - 0.093),
-    width,
-    height,
-    LEFT,
-    null,
-    colors[I1?.SR],
-    null,
-    false
-  );
+  drawTrafficLight(x * xOffset, y - x * (yOffset - 0.093), width, height, LEFT, null, colors[I1?.SR], null, false);
   drawTrafficLight(
     x * xOffset,
     y + x * yOffset,
@@ -263,17 +254,7 @@ const draw = () => {
     colors[I1?.SS],
     flashing && I1?.PN == "W" ? toggleColor : colors[I1?.PN]
   );
-  drawTrafficLight(
-    x * xOffset,
-    y - x * (yOffset - 0.093),
-    width,
-    height,
-    LEFT,
-    null,
-    colors[I1?.SR],
-    null,
-    false
-  );
+  drawTrafficLight(x * xOffset, y - x * (yOffset - 0.093), width, height, LEFT, null, colors[I1?.SR], null, false);
   drawTrafficLight(
     x * xOffset,
     y + x * yOffset,
@@ -318,17 +299,7 @@ const draw = () => {
     colors[I2?.SS],
     flashing && I2?.PN == "W" ? toggleColor : colors[I2?.PN]
   );
-  drawTrafficLight(
-    x * xOffset,
-    y - x * (yOffset - 0.093),
-    width,
-    height,
-    LEFT,
-    null,
-    colors[I2?.SR],
-    null,
-    false
-  );
+  drawTrafficLight(x * xOffset, y - x * (yOffset - 0.093), width, height, LEFT, null, colors[I2?.SR], null, false);
   drawTrafficLight(
     x * xOffset,
     y + x * yOffset,
@@ -373,17 +344,7 @@ const draw = () => {
     colors[I2?.SS],
     flashing && I2?.PN == "W" ? toggleColor : colors[I2?.PN]
   );
-  drawTrafficLight(
-    x * xOffset,
-    y - x * (yOffset - 0.093),
-    width,
-    height,
-    LEFT,
-    null,
-    colors[I2?.SR],
-    null,
-    false
-  );
+  drawTrafficLight(x * xOffset, y - x * (yOffset - 0.093), width, height, LEFT, null, colors[I2?.SR], null, false);
   drawTrafficLight(
     x * xOffset,
     y + x * yOffset,
@@ -433,17 +394,7 @@ const draw = () => {
     false
   );
 
-  drawTrafficLight(
-    x * xOffset,
-    y + x * (yOffset - 0.17),
-    width,
-    height,
-    RIGHT,
-    null,
-    colors[X1?.NS],
-    null,
-    false
-  );
+  drawTrafficLight(x * xOffset, y + x * (yOffset - 0.17), width, height, RIGHT, null, colors[X1?.NS], null, false);
   drawTrafficLight(
     x * (xOffset - 0.22),
     y + x * (yOffset - 0.43),
@@ -469,17 +420,7 @@ const draw = () => {
     colors[I1?.WS],
     flashing && I1?.PE == "W" ? toggleColor : colors[I1?.PE]
   );
-  drawTrafficLight(
-    x * (xOffset - 0.093),
-    y - x * yOffset,
-    width,
-    height,
-    UP,
-    null,
-    colors[I1?.WR],
-    null,
-    false
-  );
+  drawTrafficLight(x * (xOffset - 0.093), y - x * yOffset, width, height, UP, null, colors[I1?.WR], null, false);
   drawTrafficLight(
     x * (xOffset - 0.22),
     y - x * yOffset,
@@ -512,17 +453,7 @@ const draw = () => {
     colors[I1?.WS],
     flashing && I1?.PE == "W" ? toggleColor : colors[I1?.PE]
   );
-  drawTrafficLight(
-    x * (xOffset - 0.093),
-    y + x * yOffset,
-    width,
-    height,
-    UP,
-    null,
-    colors[I1?.WR],
-    null,
-    false
-  );
+  drawTrafficLight(x * (xOffset - 0.093), y + x * yOffset, width, height, UP, null, colors[I1?.WR], null, false);
   drawTrafficLight(
     x * (xOffset - 0.22),
     y + x * yOffset,
@@ -557,17 +488,7 @@ const draw = () => {
     colors[I2?.WS],
     flashing && I2?.PE == "W" ? toggleColor : colors[I2?.PE]
   );
-  drawTrafficLight(
-    x * (xOffset - 0.093),
-    y - x * yOffset,
-    width,
-    height,
-    UP,
-    null,
-    colors[I2?.WR],
-    null,
-    false
-  );
+  drawTrafficLight(x * (xOffset - 0.093), y - x * yOffset, width, height, UP, null, colors[I2?.WR], null, false);
   drawTrafficLight(
     x * (xOffset - 0.22),
     y - x * yOffset,
@@ -600,17 +521,7 @@ const draw = () => {
     colors[I2?.WS],
     flashing && I2?.PE == "W" ? toggleColor : colors[I2?.PE]
   );
-  drawTrafficLight(
-    x * (xOffset - 0.093),
-    y + x * yOffset,
-    width,
-    height,
-    UP,
-    null,
-    colors[I2?.WR],
-    null,
-    false
-  );
+  drawTrafficLight(x * (xOffset - 0.093), y + x * yOffset, width, height, UP, null, colors[I2?.WR], null, false);
   drawTrafficLight(
     x * (xOffset - 0.22),
     y + x * yOffset,

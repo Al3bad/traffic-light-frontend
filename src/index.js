@@ -24,7 +24,7 @@ setInterval(() => {
   eTime.innerHTML = calcTime("Melbourne", "+11");
 }, 1000);
 
-const colors = { R: "red", S: "red", Y: "yellow", G: "green", W: "red" };
+const colors = { R: "red", S: "red", Y: "yellow", G: "green", W: "red", N: "grey" };
 let data = {};
 let flashing = false;
 let toggleColor = "grey";
@@ -83,13 +83,13 @@ s.on("refresh", ({ systemIsConnected, users, systemStatus }) => {
 
 
 
-const btn = document.querySelector(".send-train-signal-btn");
-btn.addEventListener("click", (e) => {
-  s.emit("send_command", {
-    command: "CMD_INCOMING_TRAIN",
-    value: "1",
-  });
-});
+// const btn = document.querySelector(".send-train-signal-btn");
+// btn.addEventListener("click", (e) => {
+//   s.emit("send_command", {
+//     command: "CMD_INCOMING_TRAIN",
+//     value: "1",
+//   });
+// });
 
 // ==================== Canvas ========================= //
 
@@ -186,8 +186,8 @@ const draw = () => {
   drawRoad(x * 1.6, y, roadHeight, roadWidth * 0.11, roadColor);
 
   // Draw boom gates
-  drawRoad(x * 0.88, y, roadWidth * 0.005, roadWidth * 0.1, colors[X1?.state]);
-  drawRoad(x * 1.12, y, roadWidth * 0.005, roadWidth * 0.1, colors[X1?.state]);
+  drawRoad(x * 0.88, y, roadWidth * 0.005, roadWidth * 0.1, colors[X1?.SSG]);
+  drawRoad(x * 1.12, y, roadWidth * 0.005, roadWidth * 0.1, colors[X1?.NSG]);
 
   // Draw traffic light
   const UP = 180;
@@ -429,6 +429,29 @@ const draw = () => {
     DOWN,
     null,
     colors[X1?.ES],
+    null,
+    false
+  );
+
+  drawTrafficLight(
+    x * xOffset,
+    y + x * (yOffset - 0.17),
+    width,
+    height,
+    RIGHT,
+    null,
+    colors[X1?.NS],
+    null,
+    false
+  );
+  drawTrafficLight(
+    x * (xOffset - 0.22),
+    y + x * (yOffset - 0.43),
+    width,
+    height,
+    LEFT,
+    null,
+    colors[X1?.SS],
     null,
     false
   );
